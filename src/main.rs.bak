@@ -1,0 +1,85 @@
+use std::num::NonZeroU32;
+use std::rc::Rc;
+use winit::event::{Event, WindowEvent};
+use winit::event_loop::{ControlFlow, EventLoop};
+use winit::window::{WindowBuilder};
+use winit::dpi::LogicalSize;
+use image;
+
+fn main() {
+    let event_loop = EventLoop::new().unwrap();
+    let window = Rc::new(WindowBuilder::new().build(&event_loop).unwrap());
+    let context = softbuffer::Context::new(window.clone()).unwrap();
+    let mut surface = softbuffer::Surface::new(&context, window.clone()).unwrap();
+
+//	let windowsize = 400.0;
+	let img = image::open("/home/MHanak/Pictures/testimage.png").unwrap().into_rgb8();
+
+	let h = img.dimensions().1 + 1;
+	let w = img.dimensions().0 + 1;
+
+
+	window.set_min_inner_size(Some(LogicalSize::new(w, h)));
+	window.set_max_inner_size(Some(LogicalSize::new(w, h)));
+
+
+    
+	event_loop.run(move |event, elwt| {
+        elwt.set_control_flow(ControlFlow::Wait);
+
+        match event {
+            Event::WindowEvent { window_id, event: WindowEvent::RedrawRequested } if window_id == window.id() => {
+                
+				
+                let (width, height) = {
+                    let size = window.inner_size();
+                    (size.width, size.height)
+                };
+
+				println!("x: {}\ty: {}", width, height);
+				surface
+                    .resize(
+                        NonZeroU32::new(width).unwrap(),
+                        NonZeroU32::new(height).unwrap(),
+                    )
+                    .unwrap();
+
+                let mut buffer = surface.buffer_mut().unwrap();
+                
+				//image::imageops::overlay(&mut buffer, &img, 0, 256);				
+				
+ 				for index in 0..(width * height) {
+                    let y = index / width;
+                    let x = index % width;
+
+
+            	    let (width, height) = {
+        	            let size = window.inner_size();
+    	                (size.width, size.height)
+	                };
+
+
+					println!("x: {}\ty: {}\tindex: {}", x, y, index);
+
+					//let px = img.get_pixel(x, y);
+                   
+                    //buffer[index as usize] = (px[0] as u32) | ((px[1] as u32) << 8) | ((px[2] as u32) << 16);
+                 	
+					buffer[index as usize] = (100) | ((100) << 8) | ((200) << 16);
+                }
+				println!("done framebuffer");
+
+				
+
+
+            }
+            Event::WindowEvent {
+                event: WindowEvent::CloseRequested,
+                window_id,
+            } if window_id == window.id() => {
+                elwt.exit();
+            }
+            _ => {}
+        }
+    }).unwrap();
+}
