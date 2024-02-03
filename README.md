@@ -3,6 +3,7 @@ A **work in progress** rewrite of my previous Pierogi implementation in rust.
 
 ## What is pierogi?
 well it is a joke "virus" software which is a pieróg hopping around the screen like a dvd logo and going other semi malicious things
+
 ![pieróg](https://github.com/MHanak1/pierogi-rust/blob/master/src/resources/pierogi.jpg?raw=true)
 
 ## is it dangerous
