@@ -15,3 +15,7 @@ if you are willing to build the app yourself you can modify the code to disable 
 simply download the executable file suitable for your os and run it. **only run it on your own devices**
 
 i will not provide instructions on how to compile this, since if you don't know how to do it maybe the safeguarded version will be enough.
+
+## Known incompatibilities
+The program will not work with wayland, since it doesn't allow for programs to change their position (to my knowledge)
+
