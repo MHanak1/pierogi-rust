@@ -56,7 +56,7 @@ fn main() {
     let max_instances: i32 = 30; //set to -1 to disable
     let clone_ammount = 3; //how many new pierogis to spawn when the app is closed
     let closable_window = true; //wether the app should close on alt + f4 or remain open
-    let random_event_chance = 2.0; //chance for a random event to happen per second if i did the math correctly (see fn random_event())
+    let random_event_chance = 1.0; //chance for a random event to happen per second if i did the math correctly (see fn random_event())
     let open_browser = false; //enable browser opening random event
 	let _vim_like_exit = false; //wether to stop the program when :q! is typed on a keyboard (not implemented)
 	
@@ -69,7 +69,7 @@ fn main() {
     //	window.set_always_on_top(true); //why you no exist???
     //window.set_min_inner_size(Some(LogicalSize::new(w, h)));
     //window.set_max_inner_size(Some(LogicalSize::new(w, h)));
-    let _ = window.request_inner_size(LogicalSize::new(w, h));
+    let _ = window.request_inner_size(LogicalSize::new(w as f64 / window.scale_factor(), h as f64 / window.scale_factor()));
 
     //event_loop.set_control_flow(ControlFlow::Wait);
 
@@ -116,6 +116,13 @@ fn main() {
                         elwt.exit();
                     }
                 }
+				Event::WindowEvent{
+					event: WindowEvent::CloseRequested,
+                    window_id,
+                } if window_id == window.id() =>{
+					let _ = window.request_inner_size(LogicalSize::new(w as f64 /  window.scale_factor(), h as f64 /  window.scale_factor()));
+				}
+				
                 Event::NewEvents(cause) => {
                     match cause {
                         StartCause::ResumeTimeReached { .. } => {
@@ -128,10 +135,10 @@ fn main() {
 
                                 if !pos_set {
                                     xpos = (rand::random::<f32>()
-                                        * (screensize.width - window.outer_size().width) as f32)
+                                        * (screensize.width as f32 / window.scale_factor() as f32 - window.outer_size().width as f32))
                                         .abs();
                                     ypos = (rand::random::<f32>()
-                                        * (screensize.height - window.outer_size().width) as f32)
+                                        * (screensize.height as f32 / window.scale_factor() as f32 - window.outer_size().width as f32))
                                         .abs();
                                     window.set_visible(true);
                                     window.set_window_level(WindowLevel::AlwaysOnTop);
@@ -141,16 +148,16 @@ fn main() {
                                 }
 
                                 //println!("{}\t{}", xpos, ypos);
-                                if (screensize.width - window.outer_size().width) as f32 <= xpos {
+                                if (screensize.width - window.outer_size().width) as f32 / window.scale_factor() as f32 <= xpos {
                                     xup = false;
                                 }
-                                if (screensize.height - window.outer_size().height) as f32 <= ypos {
+                                if (screensize.height - window.outer_size().height) as f32 / window.scale_factor() as f32 <= ypos {
                                     yup = false;
                                 }
-                                if xpos <= 0.0 {
+                                if xpos <= 1.0 {
                                     xup = true;
                                 }
-                                if ypos <= 0.0 {
+                                if ypos <= 1.0 {
                                     yup = true;
                                 }
 
