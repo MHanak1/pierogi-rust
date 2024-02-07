@@ -11,8 +11,10 @@ use sysinfo::{ProcessRefreshKind, RefreshKind, System};
 use webbrowser;
 use winit::dpi::{LogicalPosition, LogicalSize};
 use winit::event::{Event, StartCause, WindowEvent};
+use winit::keyboard::Key;
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::{WindowBuilder, WindowLevel};
+
 
 fn main() {
     let event_loop = EventLoop::new().unwrap();
@@ -24,6 +26,11 @@ fn main() {
             .build(&event_loop)
             .unwrap(),
     );
+
+    let inbufsize = 3;
+    let mut input_buffer: [char; 3] = [' ', ' ', ' '];
+
+
     let context = softbuffer::Context::new(window.clone()).unwrap();
     let mut surface = softbuffer::Surface::new(&context, window.clone()).unwrap();
 
@@ -42,23 +49,21 @@ fn main() {
     let mut xup = rand::random::<bool>();
     let mut yup = rand::random::<bool>();
 
-
 	let mut refresh_rate: u32 = 60;
 
-    //let move_delay = Duration::from_millis(30);
     let min_speed = 100.0;
     let max_speed = 300.0; 
 
     let mut move_ammount = 0.0;
     println!("{}", move_ammount);
 
-    let _persistent_mode = false; //SPICY!!! NO RECOMMEND!!! wether the program should save itself to the autostart (not implemented)
+    let _persistent_mode = false; //SPICY!!! NO RECOMMEND!!! wether the program should save itself onto the desktop and autostart (not implemented)
     let max_instances: i32 = 30; //set to -1 to disable
     let clone_ammount = 3; //how many new pierogis to spawn when the app is closed
     let closable_window = true; //wether the app should close on alt + f4 or remain open
     let random_event_chance = 1.0; //chance for a random event to happen per second if i did the math correctly (see fn random_event())
     let open_browser = false; //enable browser opening random event
-	let _vim_like_exit = false; //wether to stop the program when :q! is typed on a keyboard (not implemented)
+	let vim_like_exit = true; //wether to stop the program when :q! is typed on a keyboard
 	
     if (get_running_instances() as i32 > max_instances) && (max_instances > -1) {
         process::exit(0);
@@ -66,12 +71,7 @@ fn main() {
     println!("{}", get_running_instances());
 
     window.set_resizable(false);
-    //	window.set_always_on_top(true); //why you no exist???
-    //window.set_min_inner_size(Some(LogicalSize::new(w, h)));
-    //window.set_max_inner_size(Some(LogicalSize::new(w, h)));
     let _ = window.request_inner_size(LogicalSize::new(w as f64 / window.scale_factor(), h as f64 / window.scale_factor()));
-
-    //event_loop.set_control_flow(ControlFlow::Wait);
 
     event_loop.set_control_flow(ControlFlow::WaitUntil(
         Instant::now().checked_add(Duration::from_millis((1000/refresh_rate).into())).unwrap(),
@@ -79,6 +79,32 @@ fn main() {
     event_loop
         .run(move |event, elwt| {
             match event {
+
+
+
+                Event::WindowEvent{
+                    event: WindowEvent::KeyboardInput{
+                        event,
+                        is_synthetic: false, ..
+                    }, ..
+                } => {
+                    if !event.repeat && event.state.is_pressed() && vim_like_exit {
+                        match event.logical_key {
+                            Key::Character(key) => {
+                                input_buffer.rotate_left(1);
+                                input_buffer[inbufsize-1] = key.chars().nth(0).unwrap();
+                                println!("{:?}", input_buffer);
+                                if input_buffer == [':', 'q', '!']{
+                                    kill_other_instances();
+                                    elwt.exit();
+                                }
+
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+
                 Event::WindowEvent {
                     window_id,
                     event: WindowEvent::RedrawRequested,
@@ -116,6 +142,8 @@ fn main() {
                         elwt.exit();
                     }
                 }
+
+                // why did i write this???
 				Event::WindowEvent{
 					event: WindowEvent::CloseRequested,
                     window_id,
@@ -195,10 +223,28 @@ fn get_running_instances() -> u32 {
     );
     let mut i = 0;
     for process in s.processes_by_exact_name(&get_program_name().unwrap()) {
-        println!("{}\t{:?}", process.name(), process.group_id());
-        i += 1;
+        
+        println!("{}\t{:?}\t{}", process.name(), process.pid(), process.parent().unwrap().as_u32());
+        //if process.parent().unwrap().as_u32() == 1{       // this only sometimes works, checks if it
+        i += 1;                                             //is a top level process
+        //}
     }
-    return i / 5;
+    return i / 5; //for some yet unknown reason each pierogi instance spawns 4 more children, so
+                  //this cheap hack accounts for that 
+}
+
+fn kill_other_instances() {
+    let s = System::new_with_specifics(
+        RefreshKind::new().with_processes(ProcessRefreshKind::everything()),
+    );
+    for process in s.processes_by_exact_name(&get_program_name().unwrap()) {
+        let parent_id = process.parent().unwrap().as_u32(); 
+        
+        println!("{}\t{}\t{}", process.pid().as_u32(), parent_id, process::id());
+        if process.pid().as_u32() != process::id() && parent_id != process::id(){
+            process.kill();
+        }
+    }
 }
 
 fn random_event(open_browser: bool) {
@@ -208,6 +254,11 @@ fn random_event(open_browser: bool) {
         "https://aniagotuje.pl/przepis/pierogi-ruskie",
         "https://www.google.com/search?q=pierogi+ruskie",
         "https://translate.google.com/?sl=pl&tl=en&text=Pierogi&op=translate",
+//        "pierogi",
+//        "test",
+//        "google translate",
+//just a little testin'
+
     ];
 
 	//println!("opened browser");

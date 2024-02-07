@@ -16,6 +16,9 @@ simply download the executable file suitable for your os and run it. **only run 
 
 i will not provide instructions on how to compile this, since if you don't know how to do it maybe the safeguarded version will be enough.
 
+## How do i stop this?
+while focused on any of the windows type :q!
+
 ## Known incompatibilities
 The program will not work with wayland, since it doesn't allow for programs to change their position (to my knowledge)
 
