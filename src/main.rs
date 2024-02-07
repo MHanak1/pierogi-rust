@@ -58,7 +58,7 @@ fn main() {
     println!("{}", move_ammount);
 
     let _persistent_mode = false; //SPICY!!! NO RECOMMEND!!! wether the program should save itself onto the desktop and autostart (not implemented)
-    let max_instances: i32 = 30; //set to -1 to disable
+    let max_instances: i32 = 20; //set to -1 to disable
     let clone_ammount = 3; //how many new pierogis to spawn when the app is closed
     let closable_window = true; //wether the app should close on alt + f4 or remain open
     let random_event_chance = 1.0; //chance for a random event to happen per second if i did the math correctly (see fn random_event())
@@ -229,8 +229,13 @@ fn get_running_instances() -> u32 {
         i += 1;                                             //is a top level process
         //}
     }
+
+    if cfg!(windows){
+        return i;
+    } else {
     return i / 5; //for some yet unknown reason each pierogi instance spawns 4 more children, so
-                  //this cheap hack accounts for that 
+                  //this cheap hack accounts for that. but that is not the case in windows 
+    }
 }
 
 fn kill_other_instances() {
@@ -284,7 +289,9 @@ fn push_front(mut s: String, prefix: &str) -> String {
 
 
 fn spawn_instances(i: i32, max: i32){
-	let remaining_instances = max - get_running_instances() as i32;
+	let remaining_instances = max - get_running_instances() as i32 + 1; // i dunno why the +1 has
+                                                                        // to be there, it just
+                                                                        // does.
 					
 	let mut to_clone = i;
 	if max > -1{
